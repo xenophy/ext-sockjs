@@ -31,25 +31,49 @@ Ext.application({
 
     launch: function() {
 
-        var provider = Ext.SockJS.addProvider({
-            url     : 'http://localhost:8085/eventbus',
-            addr    : 'demo.orderMgr'
-        });
+        var provider, uuid, url, addr;
 
+        url     = 'http://localhost:8085/eventbus';
+        addr    = 'demo.orderMgr';
 
-        Ext.widget('window', {
-            width: 200,
-            height: 150,
-            autoShow: true,
-            buttons: [{
-                text: 'Publish',
-                handler: function() {
+        Ext.Msg.prompt('Name', 'Please enter your name:', function(btn, text) {
 
-                    provider.publish('demo.orderMgr', "hogehoge");
+            if (btn == 'ok') {
 
-        //            Ext.SockJS.get('demo.orderMgr').publish("teston");
-                }
-            }]
+                provider = Ext.SockJS.addProvider({
+                    url     : url,
+                    addr    : addr
+                });
+
+                provider.on({
+                    'open': function(newid) {
+
+                        uuid = newid;
+
+                        // set client data on server side Shared Data.
+                        provider.setClientData(uuid, {name: text});
+
+                        Ext.widget('window', {
+                            title: 'ext-sockjs messanger',
+                            width: 500,
+                            height: 350,
+                            autoShow: true,
+                            buttons: [{
+                                text: 'Publish',
+                                handler: function() {
+
+                                    provider.publish('demo.orderMgr', "hogehoge");
+
+                                    //            Ext.SockJS.get('demo.orderMgr').publish("teston");
+                                }
+                            }]
+                        });
+                    },
+                    'data': function(e) {
+                        console.log(e);
+                    }
+                });
+            }
         });
 
     }

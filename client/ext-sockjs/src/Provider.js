@@ -91,14 +91,22 @@ Ext.define('Ext.sockjs.Provider', (function() {
             type = body.type,
             addr = data.address;
 
-        if (type === 'choose_uuid') {
+
+        if (type === 'set_client_data') {
+
+            // だれかのクライアント情報が更新
+
+            return;
+        }
+
+        if (type === 'choose_uuid' || type === 'set_client_data') {
             return;
         }
 
         if (type === 'decided_uuid') {
 
             if (body.message === me.uuid) {
-                me.fireEvent('open');
+                me.fireEvent('open', me.uuid);
             } else {
 
                 // TODO:connect new client!
@@ -119,7 +127,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
             return;
         }
 
-        me.fireEvent('msg', body);
+        me.fireEvent('data', body);
     }
 
     // }}}
@@ -293,10 +301,30 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         publish: function(addr, message) {
             send('publish', addr, message);
+        },
+
+        // }}}
+        // {{{ setClientData
+
+        setClientData: function(uuid, data) {
+
+            var me = this;
+
+            SockJSConn.send(Ext.encode({
+                type        : 'publish',
+                address     : me.addr,
+                body        : {
+                    type    : 'set_client_data',
+                    message : {
+                        uuid: uuid,
+                        data: data
+                    }
+                }
+            }));
+
         }
 
         // }}}
-
     }
 
     // }}}

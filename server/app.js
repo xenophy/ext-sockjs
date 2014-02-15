@@ -10,8 +10,9 @@
  */
 (function() {
 
-    var vertx, eb, console, server, sockJSServer;
+    var vertx, eb, console, server, sockJSServer, addr;
 
+    addr            = 'demo.orderMgr';
     vertx           = require('vertx');
     eb              = require('vertx/event_bus');
     console         = require('vertx/console');
@@ -49,20 +50,31 @@
             var uuid = message;
 
             if (!map.get(uuid)) {
+
                 map.put(uuid, true);
 
-                eb.publish('demo.orderMgr', {
+                eb.publish(addr, {
                     type: 'decided_uuid',
                     message: uuid
                 });
 
             } else {
 
-                eb.publish('demo.orderMgr', {
+                eb.publish(addr, {
                     type: 'reorder_uuid',
                     message: uuid
                 });
 
+            }
+
+        } else if (type === 'set_client_data') {
+
+            var uuid = message.uuid,
+                data = message.data,
+                map  = vertx.getMap('clients');
+
+            if (map.get(uuid)) {
+                map.put(uuid, JSON.stringify(data));
             }
 
         } else {
@@ -70,14 +82,14 @@
         }
 
     }
-    eb.registerHandler('demo.orderMgr', myHandler);
+    eb.registerHandler(addr, myHandler);
 
     sockJSServer.bridge({
         prefix : '/eventbus'
     }, [{
-        address : 'demo.orderMgr'
+        address : addr
     }], [{
-        address : 'demo.orderMgr'
+        address : addr
     }] );
 
     server.listen(8085);
