@@ -16,6 +16,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
     var SockJSConn = false,
         registers = {},
+        replyHandlers = {},
         state, pingInterval, pingTimerID;
 
     // {{{ onOpen
@@ -91,6 +92,33 @@ Ext.define('Ext.sockjs.Provider', (function() {
             type = body.type,
             addr = data.address;
 
+        if (type === 'set_client_data_reply') {
+
+            var replyAddress = body.message.replyAddress;
+
+            if (replyHandlers[replyAddress]) {
+                replyHandlers[replyAddress](body.message.success);
+                delete replyHandlers[replyAddress];
+            }
+
+            return;
+        }
+
+        if (type === 'get_clients_reply') {
+
+            var replyAddress = body.message.replyAddress;
+
+            if (replyHandlers[replyAddress]) {
+                replyHandlers[replyAddress](body.message.clients);
+                delete replyHandlers[replyAddress];
+            }
+
+            return;
+        }
+
+        if (type === 'get_clients') {
+            return;
+        }
 
         if (type === 'set_client_data') {
 
@@ -306,9 +334,14 @@ Ext.define('Ext.sockjs.Provider', (function() {
         // }}}
         // {{{ setClientData
 
-        setClientData: function(uuid, data) {
+        setClientData: function(id, data, callback) {
 
-            var me = this;
+            var me = this,
+                replyAddress = uuid();
+
+            if (Ext.isFunction(callback)) {
+                replyHandlers[replyAddress] = callback;
+            }
 
             SockJSConn.send(Ext.encode({
                 type        : 'publish',
@@ -316,8 +349,34 @@ Ext.define('Ext.sockjs.Provider', (function() {
                 body        : {
                     type    : 'set_client_data',
                     message : {
-                        uuid: uuid,
-                        data: data
+                        uuid        : id,
+                        data        : data,
+                        replyAddress: replyAddress
+                    }
+                }
+            }));
+
+        },
+
+        // }}}
+        // {{{ getClients
+
+        getClients: function(callback) {
+
+            var me = this,
+                replyAddress = uuid();
+
+            if (Ext.isFunction(callback)) {
+                replyHandlers[replyAddress] = callback;
+            }
+
+            SockJSConn.send(Ext.encode({
+                type        : 'publish',
+                address     : me.addr,
+                body        : {
+                    type    : 'get_clients',
+                    message : {
+                        replyAddress: replyAddress
                     }
                 }
             }));
@@ -325,6 +384,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
         }
 
         // }}}
+
     }
 
     // }}}

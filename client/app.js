@@ -51,7 +51,21 @@ Ext.application({
                         uuid = newid;
 
                         // set client data on server side Shared Data.
-                        provider.setClientData(uuid, {name: text});
+                        provider.setClientData(uuid, {name: text}, function(success) {
+
+                            if (success) {
+
+                                // get currenly connected clients.
+                                provider.getClients(function(clients) {
+                                    console.log(clients);
+
+                                });
+
+                            }
+
+                        });
+
+
 
                         Ext.widget('window', {
                             title: 'ext-sockjs messanger',

@@ -10,48 +10,58 @@
  */
 (function() {
 
-    var vertx, eb, console, server, sockJSServer, addr;
+    var vertx, eb, console, server, sockJSServer, addr, clients, map;
 
     addr            = 'demo.orderMgr';
     vertx           = require('vertx');
     eb              = require('vertx/event_bus');
     console         = require('vertx/console');
+    map             = vertx.getMap('clients');
+    clients         = {},
     server          = vertx.createHttpServer();
     sockJSServer    = vertx.createSockJSServer(server);
 
+    (function() {
 
- //   sockJSServer.on('connection', function(conn) {
-//        console.log('    [+] broadcast open ' + conn);
-        /*
-        broadcast[conn.id] = conn;
-        conn.on('close', function() {
-            delete broadcast[conn.id];
-            console.log('    [-] broadcast close' + conn);
-        });
-        conn.on('data', function(m) {
-            console.log('    [-] broadcast message', m);
-            for(var id in broadcast) {
-                broadcast[id].write(m);
+        var clientKeys = [];
+
+        clients.put = function(key, data) {
+
+            if (!clientKeys.some(function(v){ return v === key })) {
+                console.log(key);
+                clientKeys.push(key);
             }
-        });
-       */
-  //  });
 
+            map.put(key, data);
+        }
 
+        clients.get = function(key) {
+            return map.get(key);
+        }
+
+        clients.remove = function(key) {
+            delete clientKeys[key];
+            map.remove(key);
+        }
+
+        clients.getKeys = function() {
+            return clientKeys;
+        }
+
+    })();
 
     var myHandler = function(body) {
 
         var type    = body.type,
-            message = body.message,
-            map     = vertx.getMap('clients');
+            message = body.message;
 
         if (type === 'choose_uuid') {
 
             var uuid = message;
 
-            if (!map.get(uuid)) {
+            if (!clients.get(uuid)) {
 
-                map.put(uuid, true);
+                clients.put(uuid, true);
 
                 eb.publish(addr, {
                     type: 'decided_uuid',
@@ -69,13 +79,39 @@
 
         } else if (type === 'set_client_data') {
 
-            var uuid = message.uuid,
-                data = message.data,
-                map  = vertx.getMap('clients');
+            var uuid            = message.uuid,
+                data            = message.data,
+                replyAddress    = message.replyAddress,
+                success         = false;
 
-            if (map.get(uuid)) {
-                map.put(uuid, JSON.stringify(data));
+            if (clients.get(uuid)) {
+                clients.put(uuid, JSON.stringify(data));
+                success = true;
             }
+
+            eb.publish(addr, {
+                type: 'set_client_data_reply',
+                message: {
+                    replyAddress: replyAddress,
+                    success: success
+                }
+            });
+
+        } else if (type === 'get_clients') {
+
+            var replyAddress = message.replyAddress,
+                keys = clients.getKeys();
+
+            // TODO keysをもとにクライアント情報を抜き出す
+
+
+            eb.publish(addr, {
+                type: 'get_clients_reply',
+                message: {
+                    replyAddress: replyAddress,
+                    clients: keys
+                }
+            });
 
         } else {
             console.log('I received a message ' + JSON.stringify(body));
