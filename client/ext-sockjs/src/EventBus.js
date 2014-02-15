@@ -29,11 +29,11 @@ Ext.define('Ext.sockjs.EventBus', {
             id      : Ext.id(null, 'eventbus-'),
             conn    : new vertx.EventBus(config.url)
         });
+        console.dir(me.conn);
 
         // イベントハンドラ設定
         Ext.apply(me.conn, {
             onopen      : Ext.Function.pass(me.onOpen, [], me),
-            onmessage   : Ext.Function.pass(me.onMessage, [], me),
             onclose     : Ext.Function.pass(me.onClose, [], me)
         });
 
@@ -43,7 +43,7 @@ Ext.define('Ext.sockjs.EventBus', {
     // }}}
     // {{{ onOpen
 
-    onOpen: function(eventbus) {
+    onOpen: function() {
 
         var me = this;
 
@@ -62,18 +62,6 @@ Ext.define('Ext.sockjs.EventBus', {
         me.fireEvent('receive', message);
 
 //        console.log('received a message: ' + JSON.stringify(message));
-    },
-
-    // }}}
-    // {{{ onMessage
-
-    onMessage: function(e) {
-
-        var me = this;
-
-        me.fireEvent('message', e);
-
-        console.log('message', e.data);
     },
 
     // }}}

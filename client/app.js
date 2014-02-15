@@ -31,16 +31,25 @@ Ext.application({
 
     launch: function() {
 
-        // Add EventBus
-        Ext.SockJS.addEventBus({
+        var provider = Ext.SockJS.addProvider({
             url     : 'http://localhost:8085/eventbus',
             addr    : 'demo.orderMgr'
         });
 
+
         Ext.widget('window', {
             width: 200,
             height: 150,
-            autoShow: true
+            autoShow: true,
+            buttons: [{
+                text: 'Publish',
+                handler: function() {
+
+                    provider.publish('demo.orderMgr', "hogehoge");
+
+        //            Ext.SockJS.get('demo.orderMgr').publish("teston");
+                }
+            }]
         });
 
     }

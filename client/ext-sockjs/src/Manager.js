@@ -19,7 +19,7 @@ Ext.define('Ext.sockjs.Manager', {
 
     requires: [
         'Ext.util.MixedCollection',
-        'Ext.sockjs.EventBus'
+        'Ext.sockjs.VertxBusProvider'
     ],
 
     // }}}
@@ -41,40 +41,60 @@ Ext.define('Ext.sockjs.Manager', {
 
         var me = this;
 
-        me.eventbuses = new Ext.util.MixedCollection();
+        me.providers = new Ext.util.MixedCollection();
 
         me.mixins.observable.constructor.call(me);
     },
 
     // }}}
-    // {{{ addEventBus
+    // {{{ addProvider
 
-    addEventBus: function(config) {
+    addProvider: function(provider) {
 
-        var me = this;
+        var me          = this,
+            args        = arguments,
+            relayers    = me.relayers || (me.relayers = {}),
+            i, len;
 
-        config = config || {};
+        if (args.length > 1) {
+            for (i = 0, len = args.length; i < len; ++i) {
+                me.addProvider(args[i]);
+            }
 
-        Ext.applyIf(config, {
-            url: '',
-            addr: ''
+            return;
+        }
+
+        Ext.applyIf(provider, {
+            type    : '',
+            url     : 'ws://127.0.0.1:80/my_prefix'
         });
 
-        me.eventbuses.add(
-            config.addr,
-            Ext.create('Ext.sockjs.EventBus', config)
-        );
+        // if provider has not already been instantiated
+        if (!provider.isProvider) {
+            provider = Ext.create('Ext.sockjs.' + provider.type + 'Provider', provider);
+        }
+
+        me.providers.add(provider);
+        provider.on('message', me.onProviderData, me);
+
+        if (provider.relayedEvents) {
+            relayers[provider.id] = me.relayEvents(provider, provider.relayedEvents);
+        }
+
+        if (!provider.isConnected()) {
+            provider.connect();
+        }
+
+        return provider;
+
     },
 
     // }}}
-    // {{{ get
+    // {{{ getProvider
 
-    get: function(name) {
-
-        var me = this;
-
-        return me.eventbuses.get(name);
-    }
+    getProvider: function(id) {
+        return id.isProvider ? id : this.providers.get(id);
+    },
 
     // }}}
 
