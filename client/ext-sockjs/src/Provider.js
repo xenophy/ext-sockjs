@@ -71,11 +71,15 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         var me = this;
 
+        state = Ext.sockjs.Provider.CLOSING;
+
+        if (pingTimerID) {
+            clearInterval(pingTimerID);
+        }
+
+        SockJSConn.close();
+
         state = Ext.sockjs.Provider.CLOSED;
-
-        // TODO:setInservalやめる
-
-        // TODO: leaveイベント発火(他のクライアントにいなくなったことがわかるように)
 
         me.fireEvent('close');
     }
@@ -104,6 +108,22 @@ Ext.define('Ext.sockjs.Provider', (function() {
             return;
         }
 
+        if (type === 'heartbeat') {
+
+            SockJSConn.send(Ext.encode({
+                type        : 'publish',
+                address     : addr,
+                body        : {
+                    type    : 'heartbeat_reply',
+                    message : {
+                        uuid: me.uuid
+                    }
+                }
+            }));
+
+            return;
+        }
+
         if (type === 'get_clients_reply') {
 
             var replyAddress = body.message.replyAddress;
@@ -122,7 +142,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         if (type === 'set_client_data') {
 
-            // だれかのクライアント情報が更新
+            // TODO:だれかのクライアント情報が更新
 
             return;
         }
