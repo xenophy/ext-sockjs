@@ -36,6 +36,21 @@ Ext.application({
         url     = 'http://localhost:8085/eventbus';
         addr    = 'demo.orderMgr';
 
+
+        var store = Ext.create('Ext.data.Store', {
+            storeId: 'clients',
+            fields  : ['uuid', 'name'],
+            data    : {'items': []},
+            proxy: {
+                type: 'memory',
+                reader: {
+                    type: 'json',
+                    root: 'items'
+                }
+            }
+        });
+
+
         Ext.Msg.prompt('Name', 'Please enter your name:', function(btn, text) {
 
             if (btn == 'ok') {
@@ -58,7 +73,8 @@ Ext.application({
                                 // get currenly connected clients.
                                 provider.getClients(function(clients) {
 
-                                    var data = [];
+                                    var data = [],
+                                        store = Ext.data.StoreManager.lookup('clients');
 
                                     Ext.iterate(clients, function(key, item) {
                                         item = Ext.decode(item);
@@ -67,6 +83,8 @@ Ext.application({
                                             name: item.name
                                         });
                                     });
+
+                                    store.loadData(data);
 
                                     Ext.widget('window', {
                                         title: 'ext-sockjs messanger',
@@ -79,17 +97,7 @@ Ext.application({
                                             padding: 5,
                                             region: 'center',
                                             autoScroll: true,
-                                            store: {
-                                                fields  : ['uuid', 'name'],
-                                                data    : {'items': data},
-                                                proxy: {
-                                                    type: 'memory',
-                                                    reader: {
-                                                        type: 'json',
-                                                        root: 'items'
-                                                    }
-                                                }
-                                            },
+                                            store: store,
                                             columns: [
                                                 { text: 'Name',  dataIndex: 'name' },
                                                 { text: 'UUID', dataIndex: 'uuid', flex: 1 }
@@ -107,6 +115,32 @@ Ext.application({
                                 });
                             }
                         });
+                    },
+                    'addclient': function(uuid) {
+
+                        var store = Ext.data.StoreManager.lookup('clients');
+
+                        store.add({
+                            name: 'Unknown',
+                            uuid: uuid
+                        });
+                    },
+                    'updateclient': function(data) {
+
+                        var store = Ext.data.StoreManager.lookup('clients'),
+                            uuid = data.uuid,
+                            name = data.data.name,
+                            find;
+
+                        find = store.getAt(store.find('uuid', uuid));
+
+                        if (find) {
+                            console.log(data);
+                            find.set({
+                                'name': name
+                            });
+                            //find.endEdit(true, 'name');
+                        }
                     },
                     'data': function(e) {
                         console.log(e);

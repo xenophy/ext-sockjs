@@ -142,8 +142,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         if (type === 'set_client_data') {
 
-            // TODO:だれかのクライアント情報が更新
-
+            me.fireEvent('updateclient', body.message);
             return;
         }
 
@@ -156,9 +155,7 @@ Ext.define('Ext.sockjs.Provider', (function() {
             if (body.message === me.uuid) {
                 me.fireEvent('open', me.uuid);
             } else {
-
-                // TODO:connect new client!
-
+                me.fireEvent('addclient', body.message);
             }
             return;
         }
