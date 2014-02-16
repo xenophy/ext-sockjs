@@ -100,16 +100,19 @@
         } else if (type === 'get_clients') {
 
             var replyAddress = message.replyAddress,
-                keys = clients.getKeys();
+                keys = clients.getKeys(),
+                c = {}, i;
 
-            // TODO keysをもとにクライアント情報を抜き出す
-
+            for (i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                c[key] = clients.get(key);
+            }
 
             eb.publish(addr, {
                 type: 'get_clients_reply',
                 message: {
                     replyAddress: replyAddress,
-                    clients: keys
+                    clients: c
                 }
             });
 

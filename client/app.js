@@ -57,30 +57,55 @@ Ext.application({
 
                                 // get currenly connected clients.
                                 provider.getClients(function(clients) {
-                                    console.log(clients);
 
+                                    var data = [];
+
+                                    Ext.iterate(clients, function(key, item) {
+                                        item = Ext.decode(item);
+                                        data.push({
+                                            uuid: key,
+                                            name: item.name
+                                        });
+                                    });
+
+                                    Ext.widget('window', {
+                                        title: 'ext-sockjs messanger',
+                                        width: 500,
+                                        height: 350,
+                                        autoShow: true,
+                                        layout: 'border',
+                                        items: [{
+                                            xtype: 'grid',
+                                            padding: 5,
+                                            region: 'center',
+                                            autoScroll: true,
+                                            store: {
+                                                fields  : ['uuid', 'name'],
+                                                data    : {'items': data},
+                                                proxy: {
+                                                    type: 'memory',
+                                                    reader: {
+                                                        type: 'json',
+                                                        root: 'items'
+                                                    }
+                                                }
+                                            },
+                                            columns: [
+                                                { text: 'Name',  dataIndex: 'name' },
+                                                { text: 'UUID', dataIndex: 'uuid', flex: 1 }
+                                            ],
+                                        }],
+                                        buttons: [{
+                                            text: 'Publish',
+                                            handler: function() {
+
+                                                provider.publish('demo.orderMgr', "hogehoge");
+
+                                            }
+                                        }]
+                                    });
                                 });
-
                             }
-
-                        });
-
-
-
-                        Ext.widget('window', {
-                            title: 'ext-sockjs messanger',
-                            width: 500,
-                            height: 350,
-                            autoShow: true,
-                            buttons: [{
-                                text: 'Publish',
-                                handler: function() {
-
-                                    provider.publish('demo.orderMgr', "hogehoge");
-
-                                    //            Ext.SockJS.get('demo.orderMgr').publish("teston");
-                                }
-                            }]
                         });
                     },
                     'data': function(e) {
