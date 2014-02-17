@@ -98,7 +98,7 @@
             }
             deadClients = {};
 
-            console.log(JSON.stringify(clients.getKeys()));
+            // console.log(JSON.stringify(clients.getKeys()));
 
             doHeartBeat();
         });
@@ -182,9 +182,6 @@
             });
 
         } else {
-
-            console.log(body);
-
         }
 
     }

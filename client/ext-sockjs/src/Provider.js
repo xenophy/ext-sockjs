@@ -97,6 +97,20 @@ Ext.define('Ext.sockjs.Provider', (function() {
             return;
         }
 
+        if (type === 'direct_message') {
+
+            var to = body.toAddress,
+                from = body.replyAddress,
+                message = body.message,
+                receive = false;
+
+            if (to.indexOf(me.uuid) !== -1) {
+                me.fireEvent('direct_message', from, message);
+            }
+
+            return;
+        }
+
         if (type === 'set_client_data_reply') {
 
             var replyAddress = body.message.replyAddress;
@@ -365,7 +379,20 @@ Ext.define('Ext.sockjs.Provider', (function() {
         // }}}
         // {{{ to
 
-        to: function() {
+        to: function(addr, to, message) {
+
+            var me = this;
+
+            SockJSConn.send(Ext.encode({
+                type        : 'publish',
+                address     : addr,
+                body        : {
+                    type         : 'direct_message',
+                    replyAddress : me.uuid,
+                    toAddress    : to,
+                    message      : message
+                }
+            }));
 
         },
 

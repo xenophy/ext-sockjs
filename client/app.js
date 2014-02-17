@@ -109,11 +109,23 @@ Ext.application({
                                         }],
                                         buttons: [{
                                             text: 'Send',
-                                            handler: function() {
+                                            handler: function(button) {
 
-                                                //provider.publish('demo.orderMgr', "hogehoge");
+                                                var grid = button.up('window').down('grid'),
+                                                    ta = button.up('window').down('textarea'),
+                                                    sm = grid.getSelectionModel(),
+                                                    items = sm.getSelection(),
+                                                    sendlist = [];
 
-                                                provider.broadcast('demo.orderMgr', "Broadcast Message!");
+                                                Ext.iterate(items, function(item) {
+                                                    sendlist.push(item.get('uuid'));
+                                                });
+
+                                                provider.to('demo.orderMgr', sendlist, ta.getValue());
+
+                                                //provider.publish('demo.orderMgr', "Publish Message!");
+
+                                                //provider.broadcast('demo.orderMgr', "Broadcast Message!");
 
                                             }
                                         }]
@@ -153,6 +165,17 @@ Ext.application({
                         }
                     },
                     'data': function(e) {
+                    },
+                    'broadcast': function(data) {
+                    },
+                    'direct_message': function(from, data) {
+
+                        var store = Ext.data.StoreManager.lookup('clients'),
+                            name, find;
+
+                        find = store.getAt(store.find('uuid', from));
+
+                        alert('From ' + find.get('name') + ':' + data);
                     }
                 });
             }
