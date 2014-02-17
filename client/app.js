@@ -166,6 +166,15 @@ Ext.application({
                     },
                     'data': function(e) {
                     },
+                    'disconnect_clients': function(clients) {
+
+                        var store = Ext.data.StoreManager.lookup('clients');
+
+                        Ext.each(Ext.Object.getKeys(clients), function(uuid) {
+                            store.removeAt(store.find('uuid', uuid));
+                        });
+
+                    },
                     'broadcast': function(data) {
                     },
                     'direct_message': function(from, data) {

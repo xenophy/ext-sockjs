@@ -88,6 +88,15 @@ Ext.define('Ext.sockjs.Provider', (function() {
             type = body.type,
             addr = data.address;
 
+        if (type === 'disconnect_clients') {
+
+            var clients = body.clients;
+
+            me.fireEvent('disconnect_clients', clients);
+
+            return;
+        }
+
         if (type === 'broadcast') {
 
             if (me.uuid !== body.replyAddress) {
