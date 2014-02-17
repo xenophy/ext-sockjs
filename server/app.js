@@ -12,7 +12,7 @@
 
     var vertx, eb, console, server,
         sockJSServer, addr, clients, map,
-        doHeartBeat;
+        doHeartBeat, ebHandler;
 
     addr            = 'demo.orderMgr';
     vertx           = require('vertx');
@@ -80,7 +80,7 @@
             type: 'heartbeat'
         });
 
-        hbTimerID = vertx.setPeriodic(10000, function() {
+        hbTimerID = vertx.setPeriodic(1000, function() {
 
             vertx.cancelTimer(hbTimerID);
             hbAcceptReceive = false;
@@ -107,7 +107,7 @@
 
     doHeartBeat();
 
-    var myHandler = function(body) {
+    ebHandler = function(body) {
 
         var type    = body.type,
             message = body.message;
@@ -182,29 +182,13 @@
             });
 
         } else {
-            console.log('I received a message ' + JSON.stringify(body));
+
+            console.log(body);
+
         }
 
     }
-    eb.registerHandler(addr, myHandler);
-
-    // heartbeat
-
-
-
-
-
-    /*
-                keys = clients.getKeys(),
-                c = {}, i;
-
-            for (i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                c[key] = clients.get(key);
-            }
-    */
-
-
+    eb.registerHandler(addr, ebHandler);
 
     sockJSServer.bridge({
         prefix : '/eventbus'

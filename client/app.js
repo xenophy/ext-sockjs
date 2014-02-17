@@ -31,11 +31,10 @@ Ext.application({
 
     launch: function() {
 
-        var provider, uuid, url, addr;
+        var provider, uuid, url, addr, win;
 
         url     = 'http://localhost:8085/eventbus';
         addr    = 'demo.orderMgr';
-
 
         var store = Ext.create('Ext.data.Store', {
             storeId: 'clients',
@@ -49,7 +48,6 @@ Ext.application({
                 }
             }
         });
-
 
         Ext.Msg.prompt('Name', 'Please enter your name:', function(btn, text) {
 
@@ -86,7 +84,7 @@ Ext.application({
 
                                     store.loadData(data);
 
-                                    Ext.widget('window', {
+                                    win = Ext.widget('window', {
                                         title: 'ext-sockjs messanger',
                                         width: 500,
                                         height: 350,
@@ -102,12 +100,20 @@ Ext.application({
                                                 { text: 'Name',  dataIndex: 'name' },
                                                 { text: 'UUID', dataIndex: 'uuid', flex: 1 }
                                             ],
+                                        }, {
+                                            xtype: 'textarea',
+                                            padding: 5,
+                                            region: 'south',
+                                            name: 'message',
+                                            height: 100
                                         }],
                                         buttons: [{
-                                            text: 'Publish',
+                                            text: 'Send',
                                             handler: function() {
 
-                                                provider.publish('demo.orderMgr', "hogehoge");
+                                                //provider.publish('demo.orderMgr', "hogehoge");
+
+                                                provider.broadcast('demo.orderMgr', "Broadcast Message!");
 
                                             }
                                         }]
@@ -115,6 +121,12 @@ Ext.application({
                                 });
                             }
                         });
+                    },
+                    'close': function() {
+
+                        alert('Disconnected server. Please reload this page.');
+                        win.close();
+
                     },
                     'addclient': function(uuid) {
 
@@ -135,15 +147,12 @@ Ext.application({
                         find = store.getAt(store.find('uuid', uuid));
 
                         if (find) {
-                            console.log(data);
                             find.set({
                                 'name': name
                             });
-                            //find.endEdit(true, 'name');
                         }
                     },
                     'data': function(e) {
-                        console.log(e);
                     }
                 });
             }

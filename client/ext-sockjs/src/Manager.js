@@ -18,8 +18,7 @@ Ext.define('Ext.sockjs.Manager', {
     // {{{ requires
 
     requires: [
-        'Ext.util.MixedCollection',
-        'Ext.sockjs.VertxBusProvider'
+        'Ext.util.MixedCollection'
     ],
 
     // }}}

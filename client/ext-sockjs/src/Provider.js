@@ -71,14 +71,6 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         var me = this;
 
-        state = Ext.sockjs.Provider.CLOSING;
-
-        if (pingTimerID) {
-            clearInterval(pingTimerID);
-        }
-
-        SockJSConn.close();
-
         state = Ext.sockjs.Provider.CLOSED;
 
         me.fireEvent('close');
@@ -95,6 +87,15 @@ Ext.define('Ext.sockjs.Provider', (function() {
             msg  = data.message,
             type = body.type,
             addr = data.address;
+
+        if (type === 'broadcast') {
+
+            if (me.uuid !== body.replyAddress) {
+                me.fireEvent('broadcast', body.message);
+            }
+
+            return;
+        }
 
         if (type === 'set_client_data_reply') {
 
@@ -234,26 +235,6 @@ Ext.define('Ext.sockjs.Provider', (function() {
         },
 
         // }}}
-        // {{{ CONNECTING
-
-        CONNECTING: 0,
-
-        // }}}
-        // {{{ OPEN
-
-        OPEN: 1,
-
-        // }}}
-        // {{{ CLOSING
-
-        CLOSING: 2,
-
-        // }}}
-        // {{{ CLOSED
-
-        CLOSED: 3,
-
-        // }}}
         // {{{ constructor
 
         constructor: function(config) {
@@ -335,6 +316,20 @@ Ext.define('Ext.sockjs.Provider', (function() {
         },
 
         // }}}
+        // {{{ disconnect
+
+        disconnect: function() {
+
+            state = Ext.sockjs.Provider.CLOSING;
+
+            if (pingTimerID) {
+                clearInterval(pingTimerID);
+            }
+
+            SockJSConn.close();
+        },
+
+        // }}}
         // {{{ send
 
         send: function(addr, message) {
@@ -346,6 +341,32 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
         publish: function(addr, message) {
             send('publish', addr, message);
+        },
+
+        // }}}
+        // {{{ broadcast
+
+        broadcast: function(addr, message) {
+
+            var me = this;
+
+            SockJSConn.send(Ext.encode({
+                type        : 'publish',
+                address     : addr,
+                body        : {
+                    type         : 'broadcast',
+                    replyAddress : me.uuid,
+                    message      : message
+                }
+            }));
+
+        },
+
+        // }}}
+        // {{{ to
+
+        to: function() {
+
         },
 
         // }}}
@@ -398,6 +419,13 @@ Ext.define('Ext.sockjs.Provider', (function() {
                 }
             }));
 
+        },
+
+        // }}}
+        // {{{ readyState
+
+        readyState: function() {
+            return state;
         }
 
         // }}}
@@ -406,7 +434,34 @@ Ext.define('Ext.sockjs.Provider', (function() {
 
     // }}}
 
-})());
+})(), function() {
+
+    Ext.apply(Ext.sockjs.Provider, {
+
+        // {{{ CONNECTING
+
+            CONNECTING: 0,
+
+        // }}}
+        // {{{ OPEN
+
+        OPEN: 1,
+
+        // }}}
+        // {{{ CLOSING
+
+        CLOSING: 2,
+
+        // }}}
+        // {{{ CLOSED
+
+        CLOSED: 3
+
+        // }}}
+
+    });
+
+});
 
 // }}}
 
