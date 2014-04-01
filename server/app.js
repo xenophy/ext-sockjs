@@ -25,6 +25,11 @@
     server          = vertx.createHttpServer();
     sockJSServer    = vertx.createSockJSServer(server);
 
+    server.websocketHandler(function(websocket) {
+        console.log("connected");
+        console.log(websocket.headers().get("Cookie"));
+    });
+
     (function() {
 
         var clientKeys = [];
